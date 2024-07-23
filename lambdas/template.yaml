@@ -1,0 +1,165 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Description: >
+  drew-sandbox
+
+Globals:
+  Function:
+    Runtime: nodejs18.x
+    Timeout: 100
+    MemorySize: 2560
+    CodeUri: ./
+
+Resources:
+  ReprocessSets:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: cjs
+        Minify: false
+        External:
+          - aws-sdk
+        Target: "es2020"
+        Sourcemap: true
+        EntryPoints:
+          - ./reprocess-sets.js
+    Properties:
+      Architectures:
+        - arm64      
+      Timeout: 900
+      FunctionName: reprocess-sets
+      Handler: reprocess-sets.handler
+      VpcConfig:
+        SecurityGroupIds: ['sg-0268856392eae1a1d']
+        SubnetIds: [ 'subnet-093192662d56651ae', 'subnet-0c7f32fe6397fb49b']
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:*"
+                - "rds-db:*"
+                - "ssm:*"
+                - "lambda:*"
+              Resource: "*"
+      Environment:
+        Variables:
+          MAX_SETS_TO_PROCESS: 10
+          SOURCE: 'velocity'
+
+  OrphanedEventsCleanup:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: cjs
+        Minify: false
+        External:
+          - aws-sdk
+        Target: "es2020"
+        Sourcemap: true
+        EntryPoints:
+          - ./orphaned-events-cleanup.js
+    Properties:
+      Architectures:
+        - arm64      
+      Timeout: 900
+      FunctionName: orphaned-events-cleanup
+      Handler: orphaned-events-cleanup.handler
+      VpcConfig:
+        SecurityGroupIds: ['sg-0268856392eae1a1d']
+        SubnetIds: [ 'subnet-093192662d56651ae', 'subnet-0c7f32fe6397fb49b']
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:*"
+                - "rds-db:*"
+                - "ssm:*"
+                - "lambda:*"
+              Resource: "*"
+      Environment:
+        Variables:
+          QUERY_LIMIT: 1000
+          ORPHANED_EVENTS_URL: 'https://breeding-np.ag/seed-operations-orphaned-events-api/orphaned-events-api'
+
+  DrewLambdaResolver:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: cjs
+        Minify: false
+        External:
+          - aws-sdk
+        Target: "es2020"
+        Sourcemap: true
+        EntryPoints:
+          - ./drew-lambda-resolver.js
+    Properties:
+      Architectures:
+        - arm64      
+      Timeout: 900
+      FunctionName: drew-lambda-resolver
+      Handler: drew-lambda-resolver.handler
+      VpcConfig:
+        SecurityGroupIds: ['sg-0268856392eae1a1d']
+        SubnetIds: [ 'subnet-093192662d56651ae', 'subnet-0c7f32fe6397fb49b']
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:*"
+                - "rds-db:*"
+                - "ssm:*"
+                - "lambda:*"
+              Resource: "*"
+      Environment:
+        Variables:
+          QUERY_LIMIT: 1000
+          ORPHANED_EVENTS_URL: 'https://breeding-np.ag/seed-operations-orphaned-events-api/orphaned-events-api'
+
+  DrewAllPurposeLambda:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: cjs
+        Minify: false
+        External:
+          - aws-sdk
+        Target: "es2020"
+        Sourcemap: true
+        EntryPoints:
+          - ./drew-all-purpose-lambda.js
+    Properties:
+      Architectures:
+        - arm64      
+      Timeout: 900
+      FunctionName: drew-all-purpose-lambda
+      Handler: drew-all-purpose-lambda.handler
+      VpcConfig:
+        SecurityGroupIds: ['sg-0268856392eae1a1d']
+        SubnetIds: [ 'subnet-093192662d56651ae', 'subnet-0c7f32fe6397fb49b']
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:*"
+                - "rds-db:*"
+                - "ssm:*"
+                - "lambda:*"
+                - "cloudwatch:*"
+                - "s3:*"
+              Resource: "*"
+      Environment:
+        Variables:
+          QUERY_LIMIT: 1000
+          ORPHANED_EVENTS_URL: 'https://breeding-np.ag/seed-operations-orphaned-events-api/orphaned-events-api'
+          VELOCITY: true
+          FTS: false
