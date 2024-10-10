@@ -9,7 +9,7 @@
       "lib": ["es2020"],
       "target": "es2020",
       "outDir": "./dist",
-      "rootDir": "./src",
+      "rootDir": "./",
       "types": ["node", "jest"],
       "skipLibCheck": true
     },
