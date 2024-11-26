@@ -303,4 +303,25 @@ export class DataBaseAccess {
       this.client.end();
     }    
   }
+
+  static async get2024Sets(offset: number, QUERY_LIMIT: number) {
+    try {
+      await this.createClient();
+      await this.connectClient();
+
+      const query = `
+        select set_id
+        from seed_operations.sets_pivot_view spv 
+        where cast(nullif(spv.planting_year, '') as integer) >= 2024
+        order by set_id offset $1
+        limit $2
+      `;
+      const result = await this.client.query(query, [offset, QUERY_LIMIT]);
+      return result.rows;
+    } catch (error) {
+      console.warn(`Error with get2024Sets. Error: ${error}`);
+    } finally {
+      this.client.end();
+    }    
+  }
 }

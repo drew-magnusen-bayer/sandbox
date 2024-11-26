@@ -3,7 +3,7 @@ const awsConfig = { region: 'us-east-1' };
 
 export const getParamStoreConfig = async (path: string) => {
     try {
-      const prefix = "/np";
+      const prefix = '';
   
       const client = new SSMClient(awsConfig);
   
@@ -23,7 +23,7 @@ export const getParamStoreConfig = async (path: string) => {
     }
   };
 export const getConfigValue = (path: string, name: string) => {
-    const prefix = '/np';
+    const prefix = '';
     
     const config = JSON.parse(process.env.CONFIG);
   

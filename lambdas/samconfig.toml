@@ -8,3 +8,16 @@ confirm_changeset = true
 fail_on_empty_changeset = false
 capabilities = "CAPABILITY_IAM"
 image_repositories = []
+
+[prd.deploy.parameters]
+stack_name = "drew-sandbox"
+s3_bucket = "werd-test-bucket-prd"
+s3_prefix = "drew-sandbox"
+region = "us-east-1"
+confirm_changeset = true
+fail_on_empty_changeset = false
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
+parameter_overrides = """
+  Stage=prd
+"""
