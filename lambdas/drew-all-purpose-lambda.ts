@@ -1,14 +1,12 @@
 import { invokeLambda } from "./clients/aws-client";
 import { getQueryOffset, updateQueryOffset } from "./clients/dynamodb-client";
+import { DataBaseAccess } from "./clients/pg-client";
 // import superagent from "superagent";
 // import { getConfigValue, pullConfig } from "./clients/paramstore";
 
 // const AZURE_AUTH_URL = 'https://login.microsoftonline.com/fcb2b37b-5da0-466b-9b83-0014b67a7c78/oauth2/v2.0/token';
 // const PULL_NURSERY_SET_DATA_URL = 'https://breeding.ag/seed-operations-ingest-velocity-sets/v1/pull-nursery-set-data';
 // const DYNAMO_KEY = 'reprocessMexSetsOffset';
-const QUERY_LIMIT = process.env.QUERY_LIMIT ? parseInt(process.env.QUERY_LIMIT): 10;
-const targetFunction = 'pull-velocity-nursery-events-prd';
-
 // const getAzureToken = async () => {
 //   await pullConfig('/set-ingestion');
 //   const azureClientId = getConfigValue('/set-ingestion', 'azureClientId');
@@ -36,6 +34,9 @@ const targetFunction = 'pull-velocity-nursery-events-prd';
 //   }
 // };
 
+const QUERY_LIMIT = process.env.QUERY_LIMIT ? parseInt(process.env.QUERY_LIMIT): 10;
+const TARGET_FUNCTION = 'durations-replication-prd';
+const OFFSET_KEY = 'drewDurationsReplication2024';
 exports.handler = async (event, context, callback) => {
 
   // let azureToken;
@@ -52,21 +53,21 @@ exports.handler = async (event, context, callback) => {
   // }
 
 
-  const { data: offset } = await getQueryOffset('drewMexicoReingest');
-  const { data: setIds } = await getQueryOffset('drewMexicoReingestIds')
-  // const velocitySets = await getNewVelocitySets(QUERY_LIMIT, offset);
-  // let sets = await DataBaseAccess.get2024Sets(offset, QUERY_LIMIT);
-  // sets = sets.map(s=>Number(s.set_id))
-  // console.log('sets', sets)
+  const { data: offset } = await getQueryOffset('drewDurationsReplication2024');
+  // const { data: setIds } = await getQueryOffset('drewMexicoReingestIds')
+  //const velocitySets = await getNewVelocitySets(QUERY_LIMIT, offset);
+  let sets = await DataBaseAccess.get2024Sets(offset, QUERY_LIMIT);
+  sets = sets.map(s=>Number(s.set_id))
+  console.log('sets', sets)
+//  const setsSlice = setIds.slice(offset, offset+QUERY_LIMIT);
+//   console.log('sets', setsSlice);
+  // if (!!setsSlice && !!setsSlice.length) {
+  //   console.log('sendind sets to pull-velocity-nursery-events-prd:', setsSlice)
+  //   await invokeLambda({ setIds: setsSlice }, targetFunction);
 
-
-
-  const setsSlice = setIds.slice(offset, offset+QUERY_LIMIT);
-  console.log('sets', setsSlice);
-  if (!!setsSlice && !!setsSlice.length) {
-    console.log('sendind sets to pull-velocity-nursery-events-prd:', setsSlice)
-    await invokeLambda({ setIds: setsSlice }, targetFunction);
-
+  if (!!sets && !!sets.length) {
+    console.log(`sendind sets to ${TARGET_FUNCTION}:`, sets)
+    await invokeLambda({ setIds: sets }, TARGET_FUNCTION);
   //   const response = await superagent.post(PULL_NURSERY_SET_DATA_URL)
   //   .set('Authorization', `Bearer ${azureToken}`)
   //   .send({ sets: setsSlice })
@@ -77,11 +78,11 @@ exports.handler = async (event, context, callback) => {
   //   console.error('ingest-velocity-sets/pull-set-data returned the following error: ', JSON.stringify(response.msg));
   //   return;
   // }
-  const newOffset = offset+setsSlice.length;
-  console.log(`Updating drewMexicoReingest to ${newOffset}`)
-  await updateQueryOffset('drewMexicoReingest', newOffset);
+  const newOffset = offset+QUERY_LIMIT;
+  console.log(`Updating ${OFFSET_KEY} to ${newOffset}`)
+  await updateQueryOffset(OFFSET_KEY, newOffset);
     
   }
 
-  return `processed ${setsSlice}`
+  return `processed ${sets}`
 }

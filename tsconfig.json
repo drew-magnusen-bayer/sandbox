@@ -13,6 +13,6 @@
       "types": ["node", "jest"],
       "skipLibCheck": true
     },
-    "include": ["./**/*.ts", "./**/*.js"]
+    "include": ["./**/*.ts", "./**/*.js", "safe-space/build-ingestion-objects.ts"]
 }
   
